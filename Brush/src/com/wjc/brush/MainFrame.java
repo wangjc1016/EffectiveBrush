@@ -32,13 +32,14 @@ public class MainFrame extends JFrame implements ActionListener {
     static JLabel Lmessage1;
     private JLabel fontSizeAdd, fontSizeMinus;
     private static JTextField TuserAns;
-    private JButton b_submit, b_last, b_change, b_output, b_zhan;
+    private JButton b_submit, b_last, b_change, b_output, b_zhan, b_mode;
     private static int[] choose = new int[5];
     private int fontSize = 34;
     private static int lastID = -1;
     private static String GetUserAnswerStats;
     Container c;
     static String loginname;
+    static int mode = 0; //0:错误率刷题模式 1:刷完模式 2:顺序刷题模式 3:背题模式
     private static int correct, wrong;
     public MainFrame(String loginName) throws SQLException, ClassNotFoundException {
         super(loginName + " 欢迎使用刷题系统!");
@@ -126,14 +127,14 @@ public class MainFrame extends JFrame implements ActionListener {
             c.add(Lans);
 
             Lanalysis = new JLabel("解析：1111", JLabel.LEFT);
-            Lanalysis.setBounds(250, 720, 240, 55);
+            Lanalysis.setBounds(230, 720, 240, 55);
             Lanalysis.setFont(new Font("黑体", Font.PLAIN, 34));
             Lanalysis.setOpaque(true);
             Lanalysis.setBackground(Color.LIGHT_GRAY);
             c.add(Lanalysis);
 
             TuserAns = new JTextField(36);
-            TuserAns.setBounds(530, 720, 100, 55);
+            TuserAns.setBounds(490, 720, 100, 55);
             TuserAns.setFont(new Font("思源黑体", Font.BOLD, 34));
             c.add(TuserAns);
 
@@ -152,32 +153,39 @@ public class MainFrame extends JFrame implements ActionListener {
             });
 
             b_submit = new JButton("提交答案");
-            b_submit.setBounds(660, 720, 200, 55);
+            b_submit.setBounds(600, 720, 160, 55);
             b_submit.setFont(new Font("黑体", Font.BOLD, 30));
             b_submit.setBorder(BorderFactory.createRaisedBevelBorder());
             b_submit.setContentAreaFilled(false);
             c.add(b_submit);
 
             b_zhan = new JButton("斩题");
-            b_zhan.setBounds(900, 720, 100, 55);
+            b_zhan.setBounds(780, 720, 100, 55);
             b_zhan.setFont(new Font("黑体", Font.BOLD, 30));
             b_zhan.setBorder(BorderFactory.createRaisedBevelBorder());
             b_zhan.setContentAreaFilled(false);
             c.add(b_zhan);
 
             b_last = new JButton("上一题");
-            b_last.setBounds(1020, 720, 160, 55);
+            b_last.setBounds(900, 720, 160, 55);
             b_last.setFont(new Font("黑体", Font.BOLD, 30));
             b_last.setBorder(BorderFactory.createRaisedBevelBorder());
             b_last.setContentAreaFilled(false);
             c.add(b_last);
 
             b_change = new JButton("换一题");
-            b_change.setBounds(1190, 720, 160, 55);
+            b_change.setBounds(1070, 720, 160, 55);
             b_change.setFont(new Font("黑体", Font.BOLD, 30));
             b_change.setBorder(BorderFactory.createRaisedBevelBorder());
             b_change.setContentAreaFilled(false);
             c.add(b_change);
+
+            b_mode = new JButton("模式");
+            b_mode.setBounds(1240, 720, 110, 55);
+            b_mode.setFont(new Font("黑体", Font.BOLD, 30));
+            b_mode.setBorder(BorderFactory.createRaisedBevelBorder());
+            b_mode.setContentAreaFilled(false);
+            c.add(b_mode);
 
             fontSizeAdd = new JLabel("A+", JLabel.CENTER);
             fontSizeAdd.setBounds(1280, 820, 30, 30);
@@ -396,6 +404,7 @@ public class MainFrame extends JFrame implements ActionListener {
         b_change.addActionListener(this);
         b_output.addActionListener(this);
         b_zhan.addActionListener(this);
+        b_mode.addActionListener(this);
 
         this.setResizable(true);
         this.setSize(1420,900);
@@ -495,7 +504,13 @@ public class MainFrame extends JFrame implements ActionListener {
 
     public static int getQuestionID() throws SQLException {
         System.out.println("----------------------------------------");
-        String sql = "select * from (select id, correct_count, wrong_count, correct_count+wrong_count count from (" + GetUserAnswerStats + ") question) cnt where count = 0 || wrong_count*2>correct_count";
+        String sql;
+        if(mode == 0){
+            sql = "select * from (select id, correct_count, wrong_count, correct_count+wrong_count count from (" + GetUserAnswerStats + ") question) cnt where count = 0 || wrong_count*2>correct_count";
+        }else{
+            sql = "select * from (select id, correct_count, wrong_count, correct_count+wrong_count count from (" + GetUserAnswerStats + ") question) cnt where count = 0";
+        }
+
         Object[][] row;
 //        连接MySQL
 //        首先查询有几行，并根据行数设置数组和表格行数
@@ -508,7 +523,12 @@ public class MainFrame extends JFrame implements ActionListener {
             exit(0);
         }
         Random rand = new Random();
-        int randRow = rand.nextInt(cntRow);
+        int randRow;
+        if(mode == 0 || mode == 1){
+            randRow = rand.nextInt(cntRow);
+        }else {
+            randRow = 0;
+        }
         row = new Object[cntRow][1];
 
 //        5.执行SQL并返回数据集
@@ -570,10 +590,45 @@ public class MainFrame extends JFrame implements ActionListener {
                     throw new RuntimeException(ex);
                 }
             }
+        } else if (temp == b_mode) {
+            Object[] options ={ "错误率刷题模式", "刷完模式", "顺序刷题模式", "背题模式" };//0:错误率刷题模式 1:刷完模式 2:顺序刷题模式 3:背题模式
+            String s = (String) JOptionPane.showInputDialog(null,"请选择刷题模式:\n", "切换模式", JOptionPane.PLAIN_MESSAGE, new ImageIcon("xx.png"), options, "xx");
+            if(s != null){
+                switch (s) {
+                    case "错误率刷题模式" -> mode = 0;
+                    case "刷完模式" -> mode = 1;
+                    case "顺序刷题模式" -> mode = 2;
+                    case "背题模式" -> mode = 3;
+                }
+            }
         }
     }
 
     private void judge() throws SQLException, ClassNotFoundException, InterruptedException {
+        if(mode == 3){
+            try {
+                showQuestion(getQuestionID());
+            } catch (SQLException | ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+            int[] trueAns = new int[5];
+
+            StringToArray(trueAns, Lans.getText());
+
+            LopA.setBackground(Color.LIGHT_GRAY);
+            LopB.setBackground(Color.LIGHT_GRAY);
+            LopC.setBackground(Color.LIGHT_GRAY);
+            LopD.setBackground(Color.LIGHT_GRAY);
+            if(trueAns[1] == 1)
+                LopA.setBackground(Color.GRAY);
+            if(trueAns[2] == 1)
+                LopB.setBackground(Color.GRAY);
+            if(trueAns[3] == 1)
+                LopC.setBackground(Color.GRAY);
+            if(trueAns[4] == 1)
+                LopD.setBackground(Color.GRAY);
+            return;
+        }
         if(b_submit.getText().equals("提交答案")) {
             int[] trueAns = new int[5];
 
