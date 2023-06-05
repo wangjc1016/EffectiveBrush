@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Brush:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Brush_jar</output-path>
+    <root id="archive" name="Brush.jar">
+      <element id="module-output" name="Brush" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/Brush/src/com/wjc/lib/mysql-connector-java-8.0.26.jar" path-in-jar="/" />
+      <element id="module-output" name="EffectiveBrush" />
+      <element id="library" level="project" name="lib" />
+    </root>
+  </artifact>
+</component>
